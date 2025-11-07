@@ -1,20 +1,16 @@
 import os
-import sys
 import re
 import cv2
 from time import sleep
 import requests
 import pandas as pd
 from datetime import *
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup as BS
-from tqdm import tqdm, trange
-from PIL import Image
-from urllib.request import urlopen
+from tqdm import trange
 
 # my modules
 from donor_checkers.utils.image_tools import format_image
-from donor_checkers.utils.yandex_api import get_new_link, create_folder, upload_file
+from donor_checkers.utils.yandex_api import get_new_link, upload_file
 
 def wiederkraft_check(df, donor_link, discount, lower_price_limit, headers, yandex_image_folder_path, annex, check_new, excel_file_name, currencies):
     
@@ -47,8 +43,11 @@ def wiederkraft_check(df, donor_link, discount, lower_price_limit, headers, yand
                         product_html = BS(product_page.content, 'html.parser')
                         
                         # цена
-                        price = float(''.join(re.findall(r'\d+', product_html.find("bdi").text)))
-                       
+                        try:
+                            price = float(''.join(re.findall(r'\d+', product_html.find("bdi").text)))
+                        except:
+                            price = float('nan')
+
                         # фильтр по цене
                         if pd.isna(price) or price < lower_price_limit:
                             continue
@@ -61,8 +60,11 @@ def wiederkraft_check(df, donor_link, discount, lower_price_limit, headers, yand
                         if vendorCode not in df["Id"].values:
 
                             # title
-                            title = product_html.find("h1", {"class": "product_title entry-title"}).text
-                            
+                            try:
+                                title = product_html.find("h1", {"class": "product_title entry-title"}).text
+                            except:
+                                title = 'no data'
+                                
                             # получаем категории
                             category = []
                             for cat in product_html.find("nav", {"class": "woocommerce-breadcrumb"}).children:

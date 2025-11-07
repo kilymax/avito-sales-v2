@@ -1,16 +1,12 @@
 import os
-import sys
 import re
 import cv2
 from time import sleep
 import requests
 import pandas as pd
 from datetime import *
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup as BS
-from tqdm import tqdm, trange
-from PIL import Image
-from urllib.request import urlopen
+from tqdm import trange
 from transliterate import translit
 
 # my modules
@@ -31,7 +27,12 @@ def corsel_check(df, donor_link, discount, lower_price_limit, headers, yandex_im
         new_count = 0
         for p in trange(page_number):
             page_html = BS(requests.get(f"{donor_link[l]}/?PAGEN_1={p+1}").content, 'html.parser')
-            for item in page_html.find("div", {"class": "catalog_block_template"}).find_all("div", {"class": "catalog-block-view__item"}):
+            try:
+                page_content = page_html.find("div", {"class": "catalog_block_template"}).find_all("div", {"class": "catalog-block-view__item"})
+            except:
+                print('Страница пуста')
+                continue
+            for item in page_content:
                 
                 # выявление артикула и цены не переходя на страницу продукта
                 vendorCode = f"Corsel-{item.find("div", {"class": "article_block"}).text.replace("Арт.:", '').strip()}"
@@ -42,8 +43,7 @@ def corsel_check(df, donor_link, discount, lower_price_limit, headers, yandex_im
                     price = float('nan')
                 
                 # фильтр по цене
-                if pd.isna(price) or price < lower_price_limit or price > 2000000:
-                    continue
+                if pd.isna(price) or price < lower_price_limit or price > 2000000: continue
 
                 # обновление цены в excel-файле, если такой артикул есть
                 if vendorCode in df["Id"].values:
@@ -63,6 +63,10 @@ def corsel_check(df, donor_link, discount, lower_price_limit, headers, yandex_im
                             title = product_html.find("div", {"class": "topic__heading"}).text.strip()
                         except:
                             title = 'no data'
+
+                        if title == "Страница не найдена":
+                            print(f'Ошибка: страница не найдена ({vendorCode}).')
+                            continue
                         
                          # categories
                         category = []
@@ -80,8 +84,7 @@ def corsel_check(df, donor_link, discount, lower_price_limit, headers, yandex_im
                             brand = ""
                             
                         # игнорируем бренд ironmac
-                        if brand.lower() == "ironmac":
-                            continue
+                        if brand.lower() == "ironmac": continue
 
                         # description & 
                         description = []
@@ -110,10 +113,8 @@ def corsel_check(df, donor_link, discount, lower_price_limit, headers, yandex_im
                             imageUrls = imageUrls[0:10] # ограничение в 10 изображений
                             for i in range(len(imageUrls)):
                                 url = imageUrls[i]
-                                filename = f'{translit(vendorCode, language_code='ru', reversed=True)}_{i}.jpg'
-                                filename = re.sub(r'/', '-', filename, flags=re.IGNORECASE)
-                                filename = re.sub(r'"', '', filename, flags=re.IGNORECASE)
-                                filename = re.sub(r'%', '', filename, flags=re.IGNORECASE)
+                                name = ''.join(re.findall(r'[\dA-Za-z \_\-,.]', translit(vendorCode, language_code='ru', reversed=True)))
+                                filename = f'{name}_{i}.jpg'
                                 resized_img = format_image(url)
                                 cv2.imwrite(filename, resized_img)
                                 perturbed_img = perturb_image(filename)

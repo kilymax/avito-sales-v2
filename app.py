@@ -12,28 +12,28 @@ from donor_checkers.wiederkraft_checker import wiederkraft_check
 from donor_checkers.optimus_checker import optimus_check
 from donor_checkers.kwatt_checker import kwatt_check
 from donor_checkers.corsel_checker import corsel_check
-from donor_checkers.utils.yandex_api import upload_file, download_file, get_new_link, create_folder
+from donor_checkers.utils.yandex_api import create_folder
 from donor_checkers.utils.change_dateend import change_dateend
 from donor_checkers.utils.donor_launcher import launch
 
 # инициализация
 launch_date = datetime.now().date()
 bot_token = "7227476930:AAHz9Aldcx4G2cTiyyZsEfkpyUirNeSffqY"
-chat_ids = ["904798847"] 
+chat_ids = ["904798847", "546496045"] 
 # chat_ids.append("546496045") # - иван
 message = f"Произведена инициализация проверки доноров {launch_date}."
 print(f'{message}')
 yesterday = (datetime.now() - timedelta(days=1)).date().strftime("%Y-%m-%d")
 report = {}
 donors = {
-    # 'mkslift': mkslift_check,
-    # 'ironmac': ironmac_check,
+    'mkslift': mkslift_check,
+    'ironmac': ironmac_check,
     'garopt': garopt_check,
-    # 'wiederkraft': wiederkraft_check,
-    # 'optimus': optimus_check,
+    'wiederkraft': wiederkraft_check,
+    'optimus': optimus_check,
     '100kwatt_hydr': kwatt_check,
-    # 'corsel_promtorg': corsel_check,
-    # 'corsel_dvadomkrata': corsel_check,
+    'corsel_promtorg': corsel_check,
+    'corsel_dvadomkrata': corsel_check,
 }
 
 try:
@@ -62,19 +62,10 @@ try:
         excel_file_name = data['excel_file_name']
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': f'OAuth {yandex_token}'}
 
-        # temporary settings
-        # if excel_file_name == "Promtorg":
-        #     excel_file_name = "corsel_promtorg"
-        # if excel_file_name == "Dva Domkrata":
-        #     excel_file_name = "kwt"
-
         try:
             # открываем xlsx файл выгрузки
             df = pd.read_excel(f"{excel_file_name}.xlsx", sheet_name='Объявления')
             print(f"\n      Avito аккаунт — {account['name']}")
-
-            # Загрузка последних версий обратных выгрузок на яндекс диск с почты
-            # imap_download(contact_number, excel_file_name, settings['imap_pass'], headers)
 
             # перебор доноров и их проверка    
             for donor in data['donors']:

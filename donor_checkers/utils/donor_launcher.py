@@ -1,5 +1,4 @@
 
-
 def launch(checker, args):
     update, df, link, discount, lower_price_limit, headers, img_path, annex, check_new, excel_file_name, currencies = args
     if update:
@@ -13,6 +12,7 @@ def launch(checker, args):
         except Exception as e:
             result = f'ошибка при работе с донором'
             print(f'{result}: {e}\n')
-    else: result = f'обновление донора отключено'
-
+    else: 
+        result = f'обновление донора отключено'
+        print(result)
     return result, df

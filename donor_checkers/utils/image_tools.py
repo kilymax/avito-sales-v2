@@ -2,7 +2,6 @@ import cv2
 from urllib.parse import quote, urlsplit, urlunsplit
 from urllib.request import urlopen
 import numpy as np
-import os
 from skimage.util import random_noise
 
 def get_ascii_url(url: str) -> str:

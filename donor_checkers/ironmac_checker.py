@@ -1,20 +1,13 @@
 import os
-import sys
-import re
 import cv2
-import time
-import requests
 import pandas as pd
 from datetime import *
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup as BS
-from tqdm import tqdm, trange
-from PIL import Image
-from urllib.request import urlopen
+from tqdm import trange
 
 # my modules
 from donor_checkers.utils.image_tools import format_image
-from donor_checkers.utils.yandex_api import get_new_link, create_folder, upload_file
+from donor_checkers.utils.yandex_api import get_new_link, upload_file
 
 def ironmac_check(df, donor_link, discount, lower_price_limit, headers, yandex_image_folder_path, annex, check_new, excel_file_name, currencies):
     

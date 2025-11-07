@@ -1,20 +1,16 @@
 import os
-import sys
 import re
 import cv2
 from time import sleep
 import requests
 import pandas as pd
 from datetime import *
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup as BS
 from tqdm import tqdm, trange
-from PIL import Image
-from urllib.request import urlopen
 
 # my modules
 from donor_checkers.utils.image_tools import format_image
-from donor_checkers.utils.yandex_api import get_new_link, create_folder, upload_file
+from donor_checkers.utils.yandex_api import get_new_link, upload_file
 
 def optimus_check(df, donor_link, discount, lower_price_limit, headers, yandex_image_folder_path, annex, check_new, excel_file_name, currencies):
 
@@ -28,7 +24,8 @@ def optimus_check(df, donor_link, discount, lower_price_limit, headers, yandex_i
         print(f'Проверка наличия новых позиций и их добавление:')
         page = requests.get(f"{donor_link}/")
         html = BS(page.content, 'html.parser')
-        for category_div in tqdm(html.find("div", {"class": "catalog_section_list row items flexbox"}).children):
+        categories = html.find("div", {"class": "catalog_section_list row items flexbox"}).children
+        for category_div in tqdm(categories):
             if category_div != '\n':
                 links = category_div.find_all("li", {"class": "sect"})
                 for link in links:
@@ -46,8 +43,11 @@ def optimus_check(df, donor_link, discount, lower_price_limit, headers, yandex_i
                             product_html = BS(product_page.content, 'html.parser')
 
                             # цена
-                            price = float(''.join(re.findall(r'\d+', product_html.find("bdi").text)))
-                            
+                            try:
+                                price = float(''.join(re.findall(r'\d+', product_html.find("bdi").text)))
+                            except:
+                                price = float('nan')
+
                             # фильтр по цене
                             if pd.isna(price) or price < lower_price_limit:
                                 continue
@@ -60,7 +60,10 @@ def optimus_check(df, donor_link, discount, lower_price_limit, headers, yandex_i
                                 vendorCode = "no data"
                             if vendorCode not in df["Id"].values:
                                 # title
-                                title = product_html.find("h1", {"id": "pagetitle"}).text
+                                try:
+                                    title = product_html.find("h1", {"id": "pagetitle"}).text
+                                except:
+                                    title = 'no data'
                                 
                                 # получаем категории
                                 category = []
